@@ -1,0 +1,54 @@
+---
+title: "Final Project"
+author: "Honya Elfayoumy"
+date: "December 5, 2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(R2WinBUGS)
+library(mcmcplots)
+library(pander)
+library(dplyr)
+```
+
+
+```{r 1}
+ write("model pois;
+ {
+ for(i in 1:N) {
+   counts[i] ~ dpois(lambda[i])
+   log(lambda[i]) <- mu+a*status[i] + b*ages[i]+ab*status[i]*ages[i]
+ }
+   ratio.odds <-exp(ab)
+   mu ~ dnorm (0.0, 1)
+   a ~ dnorm (0.0, 1)
+   b ~ dnorm (0.0, 1)
+  ab ~ dnorm (0.0, 1)
+ }
+ ","modelPois.txt")
+```
+
+ # The model is Run
+
+```{r 2}
+status = c(1,1,0,0)
+ages = c (1,0,1,0)
+counts = c (683,2537,1498,8747)
+N=length(counts)
+
+data=list("N","status","ages","counts")
+params=c("a","b","ratio.odds" )
+inits <- function () { list ( mu = rnorm (1) ,a = rnorm (1),b = rnorm (1),ab = rnorm (1) ) }
+
+nc <- 2      #number of MCMC chains to run
+ni <- 5000  #number of samples for each chain
+nb <- 1000   #number of samples to discard as burn-in
+nt <- 1      #thinning rate, increase this to reduce autocorrelation
+
+bugs.out <- bugs(data=data, inits=inits, parameters.to.save=params, model.file="modelPois.txt",n.chains=nc, n.iter=ni, n.burnin=nb, n.thin=nt, debug=TRUE, DIC=TRUE, bugs.directory = "C:\\Program Files\\WinBUGS14", working.directory=getwd())
+ bugs.summary <- bugs.out$summary
+ print(bugs.summary, digits = 3)
+```
+
